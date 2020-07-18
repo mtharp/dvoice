@@ -3,11 +3,12 @@ package dvoice
 import (
 	"bytes"
 	"encoding/binary"
+	"errors"
+	"fmt"
 	"math/rand"
 	"net"
 	"time"
 
-	"github.com/pkg/errors"
 	"golang.org/x/crypto/nacl/secretbox"
 )
 
@@ -45,7 +46,7 @@ func discoverIP(conn net.Conn, ssrc uint32) (addr net.UDPAddr, err error) {
 	ipStr := string(buf[:j])
 	addr.IP = net.ParseIP(ipStr)
 	if addr.IP == nil {
-		err = errors.Wrapf(err, "invalid response: %q", ipStr)
+		err = fmt.Errorf("invalid response %q: %w", ipStr, err)
 		return
 	}
 	// port as the last 2 bytes of the response

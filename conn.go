@@ -3,6 +3,7 @@ package dvoice
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net"
 	"strings"
@@ -11,7 +12,6 @@ import (
 
 	"github.com/bwmarrin/discordgo"
 	"github.com/gorilla/websocket"
-	"github.com/pkg/errors"
 )
 
 // Predefined errors
@@ -176,7 +176,7 @@ func (c *Conn) openLocked() error {
 	var err error
 	c.wsConn, _, err = websocket.DefaultDialer.Dial(dest, nil)
 	if err != nil {
-		return errors.Wrap(err, "connecting to voice endpoint")
+		return fmt.Errorf("connecting to voice endpoint: %w", err)
 	}
 	req := wsRequest{
 		Op: opIdentify,
@@ -188,7 +188,7 @@ func (c *Conn) openLocked() error {
 		},
 	}
 	if err := c.wsConn.WriteJSON(req); err != nil {
-		return errors.Wrap(err, "sending ident request")
+		return fmt.Errorf("sending ident request: %w", err)
 	}
 	c.wsOpen = true
 	go c.receiveWS()
@@ -278,7 +278,7 @@ func (c *Conn) selectProtocol(p readyPayload) (err error) {
 	addr := fmt.Sprintf("%s:%d", p.IP, p.Port)
 	conn, err := net.Dial("udp", addr)
 	if err != nil {
-		return errors.Wrapf(err, "invalid UDP endpoint %s", addr)
+		return fmt.Errorf("invalid UDP endpoint %s: %w", addr, err)
 	}
 	defer func() {
 		if err != nil {
